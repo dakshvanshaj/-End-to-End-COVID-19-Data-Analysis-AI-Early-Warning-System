@@ -1,0 +1,60 @@
+services:
+    # Service 1: The Database
+    db:
+        image: postgres:18.1
+        container_name: ds-postgres
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: password123
+        ports:
+            - "5432:5432"
+        volumes:
+        # Maps D:\pg18_data (Windows) -> /var/lib/postgresql (Linux Container)
+        # CRITICAL: This path is specific to Postgres 18+
+            - pg_data:/var/lib/postgresql
+
+    # Service 2: The UI
+    pgadmin:
+        image: dpage/pgadmin4:9.11
+        container_name: ds-pgadmin
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@admin.com
+            PGADMIN_DEFAULT_PASSWORD: root
+        ports:
+            - "5050:80"
+        volumes:
+            - pgadmin_data:/var/lib/pgadmin 
+        depends_on:
+            - db
+
+    # Service 3: Automation (n8n)
+    n8n:
+        image: docker.n8n.io/n8nio/n8n
+        container_name: ds-n8n
+        restart: always
+        ports:
+            - "5678:5678"
+        environment:
+            - N8N_HOST=localhost
+            - N8N_PORT=5678
+            - N8N_PROTOCOL=http
+            - NODE_ENV=production
+            - WEBHOOK_URL=http://localhost:5678/
+            - GENERIC_TIMEZONE=Asia/Kolkata  # Sets time to IST
+        volumes:
+            - n8n_data:/home/node/.n8n
+        depends_on:
+            - db
+
+volumes:
+    pg_data:
+        external: true
+        name: data_stack_pg_data
+    pgadmin_data:
+        external: true
+        name: data_stack_pgadmin_data
+    n8n_data:
+        external: true
+        name: n8n_data
