@@ -55,7 +55,8 @@ Designed two automated workflows to bridge the gap between data and decision-mak
 *   **Goal**: Routine executive briefing.
 *   **Process**: Aggregates national/state data → Generates AI summary via OpenAI → Emails stakeholders.
 
-![alt text](image.png)
+
+![alt text](images/n8n_covid_alert.png)
 
 #### Workflow 2: Early Warning Alert System
 *   **Goal**: Proactive risk detection.
