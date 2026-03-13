@@ -5,23 +5,22 @@ services:
         container_name: ds-postgres
         restart: always
         environment:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: password123
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: ${DB_NAME}
         ports:
-            - "5432:5432"
+            - "${DB_PORT}:5432"
         volumes:
-        # Maps D:\pg18_data (Windows) -> /var/lib/postgresql (Linux Container)
-        # CRITICAL: This path is specific to Postgres 18+
             - pg_data:/var/lib/postgresql
 
-    # Service 2: The UI
+    # Service 2: The UI (pgAdmin)
     pgadmin:
         image: dpage/pgadmin4:9.11
         container_name: ds-pgadmin
         restart: always
         environment:
-            PGADMIN_DEFAULT_EMAIL: admin@admin.com
-            PGADMIN_DEFAULT_PASSWORD: root
+            PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+            PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
         ports:
             - "5050:80"
         volumes:
@@ -42,19 +41,33 @@ services:
             - N8N_PROTOCOL=http
             - NODE_ENV=production
             - WEBHOOK_URL=http://localhost:5678/
-            - GENERIC_TIMEZONE=Asia/Kolkata  # Sets time to IST
+            - GENERIC_TIMEZONE=Asia/Kolkata
         volumes:
             - n8n_data:/home/node/.n8n
         depends_on:
             - db
 
+    # Service 4: The Dashboard (Streamlit UI)
+    app:
+        build: .
+        container_name: ds-dashboard
+        ports:
+            - "8501:8501"
+        environment:
+            - DB_HOST=${DB_HOST}
+            - DB_PORT=${DB_PORT}
+            - DB_USER=${DB_USER}
+            - DB_PASSWORD=${DB_PASSWORD}
+            - DB_NAME=${DB_NAME}
+        entrypoint: ["./entrypoint.sh"]
+        command: ["streamlit", "run", "src/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+        depends_on:
+            - db
+
 volumes:
     pg_data:
-        external: true
         name: data_stack_pg_data
     pgadmin_data:
-        external: true
         name: data_stack_pgadmin_data
     n8n_data:
-        external: true
         name: n8n_data
