@@ -1,0 +1,58 @@
+site_name: "COVID-19 Intelligence Portal"
+site_author: "Daksh Vanshaj"
+
+nav:
+  - Home: index.md
+  - Business Context: business_context.md
+  - Infrastructure & Setup: infrastructure.md
+  - Core Pipeline Scripts:
+      - Master Orchestrator: scripts/main.md
+      - Data Ingestor: scripts/ingestion.md
+      - Executive Portal: scripts/app.md
+      - Container Entrypoint: scripts/entrypoint.md
+  - Data Engineering (SQL):
+      - Medallion Logic: scripts/sql_etl.md
+  - Intelligent Surveillance:
+      - Strategic Prompting: prompts.md
+      - Dynamic Data Extraction: data_extraction.md
+      - Automation Blueprints: automation_blueprints.md
+  - Data Strategy | Pipeline: notebooks_docs/01_data_assessment.ipynb
+  - Production & Cloud: cloud_production.md
+
+theme:
+  name: material
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  primary: teal
+  accent: amber
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.tabs
+    - navigation.instant
+
+plugins:
+  - search
+  - mkdocs-jupyter
+  - mermaid2
+
+repo_url: https://github.com/dakshvanshaj/-End-to-End-COVID-19-Data-Analysis-AI-Early-Warning-System
+repo_name: "End-to-End-COVID-Pipeline"
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dakshvanshaj
+
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/daksh-vanshaj-9a9650344/
