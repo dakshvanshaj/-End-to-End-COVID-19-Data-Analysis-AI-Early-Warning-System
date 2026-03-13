@@ -1,0 +1,264 @@
+{
+  "name": "COVID-Alert-System_v2",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM v_critical_alerts WHERE date = (SELECT MAX(date) FROM v_critical_alerts)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        80
+      ],
+      "id": "5bd77c72-d19d-483e-bbe1-375597d6670b",
+      "name": "Query v_critical_alerts",
+      "credentials": {
+        "postgres": {
+          "id": "7CB6K00SZuteAAmU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length === 0) return [{ json: { skip: true } }];\n\nlet report = \"\";\nitems.forEach(i => {\n  const d = i.json;\n  report += `State: ${d.state} | Positivity: ${d.positive_test_rate}% | Risk Score: ${d.weighted_risk_score}\\n`;\n});\n\nreturn [{ json: { full_data: report, count: items.length, date: items[0].json.date } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        80
+      ],
+      "id": "8039b318-ea02-4a4c-b609-f2d285bfe85d",
+      "name": "Format Risk Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a Public Health Data Intelligence Officer. Generate a professional COVID-19 Situation Report in HTML format for {{ $json.count }}\nstates at risk.\nCRITICAL INSTRUCTIONS:\n  Return ONLY the raw HTML code.\n  Do NOT include any markdown code blocks (NO ```html or\n\n  `).\n   - Do NOT include any introductory or explanatory text outside the HTML.\n   - All styles must be inline CSS for email compatibility.\n\n  DATA FOR ANALYSIS:\n  {{ $json.full_data }}\n\n  STRUCTURE:\n   1. <h3>📊 Executive Summary</h3>: A 2-sentence synthesis of current risk.\n   2. <h3>🚩 High-Risk Jurisdictions</h3>: An HTML table showing State, Positivity, and Risk Score.\n   3. <h3>🛡️ Recommended Actions</h3>: 3 specific bullet points for resource mobilization.\n   4. <h3>🔄 System Tuning (Human-in-the-Loop)</h3>:\n     Include these two styled buttons or links:\n      - [Confirm Outbreak] -> http://localhost:5678/webhook/covid-feedback?status=Confirmed&state=ALL&date={{ $json.date }}\n      - [False Alarm] -> http://localhost:5678/webhook/covid-feedback?status=False Positive&state=ALL&date={{ $json.date }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        864,
+        80
+      ],
+      "id": "905c408e-0445-46c3-896b-0aba5afc0700",
+      "name": "AI Situation Report"
+    },
+    {
+      "parameters": {
+        "path": "covid-feedback",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        464,
+        336
+      ],
+      "id": "15d2dcba-b78e-4e0a-87dc-93213d0ccbcc",
+      "name": "Feedback Webhook",
+      "webhookId": "0b69d937-9e09-4ba2-8b95-26ae864740c5"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO alert_feedback (state, alert_date, status) VALUES ('{{ $json.query.state }}', '{{ $json.query.date }}', '{{ $json.query.status }}')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        720,
+        336
+      ],
+      "id": "e7dd10af-e15c-4fee-9fc5-d470fd478849",
+      "name": "Log Feedback to DB",
+      "credentials": {
+        "postgres": {
+          "id": "7CB6K00SZuteAAmU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemma-3-27b-it",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        912,
+        288
+      ],
+      "id": "c38e0c0d-5763-4b86-8794-48ff0161be48",
+      "name": "Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "p16PShmsbKzZJFRz",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "alerts@health-system.test",
+        "toEmail": "davevanshaj55646@gmail.com",
+        "subject": "=🚨 COVID-19 CRITICAL RISK ALERT: {{ $json.count }} States Flagged",
+        "html": "={{ $node[\"AI Situation Report\"].json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1120,
+        80
+      ],
+      "id": "6cb574d4-d206-4946-aad2-e58faa179cf4",
+      "name": "Send Alert Email",
+      "webhookId": "87a0c315-3dfb-4d42-8aba-33fcc5873b46",
+      "credentials": {
+        "smtp": {
+          "id": "VfhZMINmhTukVPe1",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "audit-trigger",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        256,
+        80
+      ],
+      "id": "ec0d2efc-419b-40e4-b2a3-8d683d1a31b1",
+      "name": "Audit Trigger",
+      "webhookId": "20d7cf05-7eb6-46df-8fc0-c7fcc9ca5d0b",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO latest_ai_report (report_html) VALUES ('{{ $('AI Situation Report').item.json.text }}')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1312,
+        80
+      ],
+      "id": "9f1a810f-c33e-4e46-b58f-581f3a4fe45d",
+      "name": "Save Report to DB",
+      "credentials": {
+        "postgres": {
+          "id": "7CB6K00SZuteAAmU",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Query v_critical_alerts": {
+      "main": [
+        [
+          {
+            "node": "Format Risk Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Risk Data": {
+      "main": [
+        [
+          {
+            "node": "AI Situation Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Situation Report": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Situation Report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Feedback Webhook": {
+      "main": [
+        [
+          {
+            "node": "Log Feedback to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audit Trigger": {
+      "main": [
+        [
+          {
+            "node": "Query v_critical_alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Alert Email": {
+      "main": [
+        [
+          {
+            "node": "Save Report to DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2a601744-d3d5-4a8f-9c60-5d534199fd69",
+  "meta": {
+    "instanceId": "4c49a268c6d8c5b1ab229858d2578271b44484c9b4fa4f9248919044b05bf495"
+  },
+  "id": "nUKZP4vXYogzuo6Eq_0Bm",
+  "tags": []
+}
