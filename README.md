@@ -1,81 +1,89 @@
-# 🚀 COVID-19 Analysis & AI Early Warning System
+# 🚀 COVID-19 Automated Analysis & AI Early Warning System
 
 ## 📌 Project Overview
-This project implements an end-to-end **Data Analysis** to analyze India’s COVID-19 pandemic data. Adopting a **Medallion Architecture**, it combines robust Data Engineering (SQL ETL), Advanced Analytics (Excel/Power BI), and GenAI Automation (n8n) to provide both historical insights and proactive early-warning alerts for public health stakeholders.
+This project implements a fully automated, end-to-end **Data Engineering & Analytics pipeline** to analyze India’s COVID-19 pandemic data. Adopting a **Medallion Architecture**, it transforms raw data into high-signal insights and proactive early-warning alerts.
+
+The system is a fully containerized, offering a **"one-click" deployment** that handles database initialization, data ingestion, and transformation automatically.
 
 ---
-
-## 📌 Key Objectives
-1.  **ETL**: Consolidate disparate datasets (Cases, Vaccination, Testing) into a single source of truth.
-2.  **Analytics**: Visualize trends, vaccination progress, and state-wise impact.
-3.  **Automation**: Operationalize insights via AI-driven daily reports and risk alerts.
 
 ## 🏗️ System Architecture
-The system operates on a centralized data warehouse that feeds both passive and active monitoring layers.
+The system operates as a unified stack of modular components:
 
-1.  **Data Warehouse (PostgreSQL)**: Single source of truth storing Bronze, Silver, and Gold data layers.
-2.  **Analytics Layer (Excel & Power BI)**: Passive monitoring, exploratory analysis, and interactive dashboards.
-3.  **Automation Layer (n8n + GenAI)**: Active monitoring that triggers daily risk assessments and generates LLM-powered situation reports.
-
----
-
-## ⚙️ The Pipeline: Phase-by-Phase
-
-### Phase 1: SQL ETL (Extract, Transform, Load)
-We utilized a **Medallion Architecture** to process raw CSVs (`covid_19_india.csv`, `covid_vaccine_statewise.csv`, `StatewiseTestingDetails.csv`) into a production-grade warehouse.
-
-*   **Bronze Layer (Ingestion)**:
-    *   Created staging tables with `TEXT` data types to prevent ingestion failures caused by inconsistent CSV headers or formatting.
-    *   Implemented defensive SQL to filter out metadata rows before processing.
-*   **Silver Layer (Standardization)**:
-    *   **Data Hygiene**: Used `NULLIF` and `COALESCE` to handle inconsistent missing values (dashes, empty strings).
-    *   **Date Parsing**: Implemented conditional `CASE` logic to parse heterogeneous date formats (e.g., `dd/mm/yyyy` vs `yyyy-mm-dd`) into a standard SQL `DATE` type.
-*   **Gold Layer (Feature Engineering)**:
-    *   **Imputation**: Applied a forward-fill strategy using `MAX() OVER (PARTITION BY state)` to handle sparse reporting days for vaccination/testing data.
-    *   **Metrics**: Engineered `Daily_New_Cases` using `LAG()` window functions and calculated `Positivity Rate` and `Case Fatality Rate (CFR)`.
-    *   **Deduplication**: Enforced data grain integrity (1 row per state per day) using `ROW_NUMBER()` to remove duplicate entries.
-    *   **Persistence**: Added `postgres_etl` backup to ensure database recoverability.
-
-### Phase 2: Advanced Analytics (Excel)
-*   **Forecasting**: Deployed Exponential Smoothing (ETS) algorithms to project case trajectories 30 days into the future with 95% confidence intervals.
-*   **Risk Stratification**: Built dynamic arrays to categorize states into High/Medium/Low risk based on active cases and mortality trends.
-*   **Anomaly Detection**: Identified "Administrative Seasonality" where case reporting consistently dipped on Tuesdays due to weekend lags.
-*   **Excel Dashboard**:
-![alt text](images/excel_dashboard.png)
-
-### Phase 3: Power BI dashboard
-![alt text](images/powerbi_dashboard.png)
-![alt text](images/powerbi_dashboard_2.png)
-
-### Phase 3: AI Automation (n8n + GenAI)
-Designed two automated workflows to bridge the gap between data and decision-makers.
-
-![alt text](images/WorkFlow1.png)
-#### Workflow 1: Daily Situation Report
-*   **Goal**: Routine executive briefing.
-*   **Process**: Aggregates national/state data → Generates AI summary via OpenAI → Emails stakeholders.
-
-
-![alt text](images/n8n_covid_alert.png)
-
-#### Workflow 2: Early Warning Alert System
-*   **Goal**: Proactive risk detection.
-*   **Logic**: Triggers if:
-    1.  Cases rise for 3 consecutive days.
-    2.  Positivity Rate > 10%.
-    3.  Vaccination growth slows while cases rise.
-*   **Action**: GenAI explains *why* the trend is concerning and suggests immediate containment actions.
+1.  **Data Warehouse (PostgreSQL)**: Single source of truth using a Medallion schema (Bronze → Silver → Gold).
+2.  **Orchestrator (Python/SQLAlchemy)**: The "Engine" that manages the sequence of SQL transformations.
+3.  **Ingestor (Python/Pandas)**: The "Fuel" that handles bulk historical loads and simulated "Live Feed" drops.
+4.  **Command Center (Streamlit)**: A unified web UI for real-time visualization, data exploration, and alert monitoring.
+5.  **Nervous System (n8n + Gemini)**: Active surveillance that triggers AI-driven alerts with a **Closed-Loop Feedback** mechanism.
 
 ---
 
 ## 📂 Project Structure
-
 ```text
-├── data/               # Raw CSV datasets (Bronze)
-├── sql/                # ETL scripts & postgres_etl backup
-├── excel/              # EDA workbooks and forecasting models
-├── powerbi/            # Interactive .pbix dashboards
-├── n8n/                # Automation workflow JSONs (Report & Alert)
-├── images/             # Project screenshots
-├── docs/               # Detailed reports and visual assets
-└── README.md           # Master documentation
+├── SQL/scripts/        # Modular SQL transformation phases (00-04)
+├── src/                # Python Source Code
+│   ├── main.py         # Orchestrator (Master Controller)
+│   ├── ingestion.py    # Data Loading & Simulation logic
+│   └── app.py          # Streamlit Command Center UI
+├── n8n_workflows/      # Automation JSONs (Refined Alert System)
+├── data/raw/           # Original CSV datasets
+├── compose.yaml        # Docker stack definition
+├── Dockerfile          # Shared Python environment
+└── entrypoint.sh       # Auto-initialization script
+```
+
+---
+
+## 🚀 Getting Started (The "Boom" Method)
+
+The recommended way to run the system is using Docker. This ensures all dependencies and database schemas are configured correctly.
+
+### **1. Prerequisites**
+*   Docker & Docker Compose installed.
+*   A `.env` file in the root directory:
+    ```env
+    # Database Configuration (Postgres)
+    DB_USER=postgres
+    DB_PASSWORD=password
+    DB_HOST=db    # The default name of the database service in docker-compose.yaml
+    DB_PORT=5432  
+    DB_NAME=postgres
+
+    # pgAdmin Configuration
+    PGADMIN_DEFAULT_EMAIL=admin@admin.com
+    PGADMIN_DEFAULT_PASSWORD=root
+    ```
+
+### **2. Launch the Stack**
+Run the following command in your terminal:
+```bash
+docker-compose up 
+```
+After your work is done and want to shutdown the stack:
+```bash
+docker-compose down
+```
+check the services
+```bash
+
+
+### **3. What happens automatically?**
+*   **Infrastructure**: Postgres, pgAdmin, and n8n services start.
+*   **Initialization**: The `app` container waits for the DB, .
+*   **Ingestion**: 40,000+ rows of historical data are bulk-loaded into the Bronze layer.
+*   **Transformation**: The pipeline runs Silver (Cleaning) and Gold (Engineering) logic.
+*   **UI Launch**: The `app` container starts the Streamlit app.
+
+### **4. Access the Tools**
+*   **Command Center (UI)**: `http://localhost:8501`
+*   **pgAdmin (DB Debug)**: `http://localhost:5050` 
+*   **n8n (Automation)**: `http://localhost:5678`
+
+---
+
+## ⚙️ How to Work with the System
+
+### **A. Using the Command Center**
+The Streamlit app is your primary interface:
+
+
