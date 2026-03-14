@@ -63,7 +63,9 @@ services:
         command: ["streamlit", "run", "src/app.py", "--server.port=8501", "--server.address=0.0.0.0"]
         depends_on:
             - db
-
+        volumes:
+                    # Map your local current directory (.) to /app in the container for live reloading
+                    - .:/app
 volumes:
     pg_data:
         name: data_stack_pg_data
