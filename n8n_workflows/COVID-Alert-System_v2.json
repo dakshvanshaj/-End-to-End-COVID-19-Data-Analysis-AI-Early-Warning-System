@@ -3,55 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT * FROM v_critical_alerts WHERE date = (SELECT MAX(date) FROM v_critical_alerts)",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        464,
-        80
-      ],
-      "id": "5bd77c72-d19d-483e-bbe1-375597d6670b",
-      "name": "Query v_critical_alerts",
-      "credentials": {
-        "postgres": {
-          "id": "7CB6K00SZuteAAmU",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\nif (items.length === 0) return [{ json: { skip: true } }];\n\nlet report = \"\";\nitems.forEach(i => {\n  const d = i.json;\n  report += `State: ${d.state} | Positivity: ${d.positive_test_rate}% | Risk Score: ${d.weighted_risk_score}\\n`;\n});\n\nreturn [{ json: { full_data: report, count: items.length, date: items[0].json.date } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        656,
-        80
-      ],
-      "id": "8039b318-ea02-4a4c-b609-f2d285bfe85d",
-      "name": "Format Risk Data"
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "=You are a Public Health Data Intelligence Officer. Generate a professional COVID-19 Situation Report in HTML format for {{ $json.count }}\nstates at risk.\nCRITICAL INSTRUCTIONS:\n  Return ONLY the raw HTML code.\n  Do NOT include any markdown code blocks (NO ```html or\n\n  `).\n   - Do NOT include any introductory or explanatory text outside the HTML.\n   - All styles must be inline CSS for email compatibility.\n\n  DATA FOR ANALYSIS:\n  {{ $json.full_data }}\n\n  STRUCTURE:\n   1. <h3>📊 Executive Summary</h3>: A 2-sentence synthesis of current risk.\n   2. <h3>🚩 High-Risk Jurisdictions</h3>: An HTML table showing State, Positivity, and Risk Score.\n   3. <h3>🛡️ Recommended Actions</h3>: 3 specific bullet points for resource mobilization.\n   4. <h3>🔄 System Tuning (Human-in-the-Loop)</h3>:\n     Include these two styled buttons or links:\n      - [Confirm Outbreak] -> http://localhost:5678/webhook/covid-feedback?status=Confirmed&state=ALL&date={{ $json.date }}\n      - [False Alarm] -> http://localhost:5678/webhook/covid-feedback?status=False Positive&state=ALL&date={{ $json.date }}",
-        "batching": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.chainLlm",
-      "typeVersion": 1.9,
-      "position": [
-        864,
-        80
-      ],
-      "id": "905c408e-0445-46c3-896b-0aba5afc0700",
-      "name": "AI Situation Report"
-    },
-    {
-      "parameters": {
         "path": "covid-feedback",
         "options": {}
       },
@@ -111,7 +62,7 @@
         "fromEmail": "alerts@health-system.test",
         "toEmail": "davevanshaj55646@gmail.com",
         "subject": "=🚨 COVID-19 CRITICAL RISK ALERT: {{ $json.count }} States Flagged",
-        "html": "={{ $node[\"AI Situation Report\"].json.text }}",
+        "html": "={{ $node[\"AI Intelligence\"].json.text.replace(/^```html|```$/g, '').trim() }}",
         "options": {}
       },
       "type": "n8n-nodes-base.emailSend",
@@ -144,13 +95,12 @@
       ],
       "id": "ec0d2efc-419b-40e4-b2a3-8d683d1a31b1",
       "name": "Audit Trigger",
-      "webhookId": "20d7cf05-7eb6-46df-8fc0-c7fcc9ca5d0b",
-      "disabled": true
+      "webhookId": "20d7cf05-7eb6-46df-8fc0-c7fcc9ca5d0b"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=INSERT INTO latest_ai_report (report_html) VALUES ('{{ $('AI Situation Report').item.json.text }}')",
+        "query": "=INSERT INTO latest_ai_report (report_html) VALUES ('{{ $('AI Intelligence').item.json.text }}')",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -167,48 +117,64 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT \n    state, \n    daily_new_cases, \n    positive_test_rate, \n    weighted_risk_score \nFROM v_critical_alerts \nWHERE date = (SELECT MAX(date) FROM v_critical_alerts);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        464,
+        80
+      ],
+      "id": "5bd77c72-d19d-483e-bbe1-375597d6670b",
+      "name": "Extract Data",
+      "credentials": {
+        "postgres": {
+          "id": "7CB6K00SZuteAAmU",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nif (items.length === 0) return [{ json: { skip: true } }];\n\nlet report = \"\";\nitems.forEach(i => {\n  const d = i.json;\n  report += `State: ${d.state} | Positivity: ${d.positive_test_rate}% | Risk Score: ${d.weighted_risk_score}\\n`;\n});\n\nreturn [{ json: { full_data: report, count: items.length, date: items[0].json.date } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        80
+      ],
+      "id": "8039b318-ea02-4a4c-b609-f2d285bfe85d",
+      "name": "Format Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nYou are a Public Health Data Intelligence Officer. Generate a professional COVID-19 Situation Report in HTML format for {{ $json.count }}\nstates at risk.\nCRITICAL INSTRUCTIONS:\n  Return ONLY the raw HTML code.\n  Do NOT include any markdown code blocks (NO ```html or\n\n  `).\n   - Do NOT include any introductory or explanatory text outside the HTML.\n   - All styles must be inline CSS for email compatibility.\n\n  DATA FOR ANALYSIS:\n  {{ $json.full_data }}\n\n  STRUCTURE:\n   1. <h3>Executive Summary</h3>: A 2-sentence synthesis of current risk.\n   2. <h3>High-Risk Jurisdictions</h3>: An HTML table showing State, Positivity, and Risk Score.\n   3. <h3>Recommended Actions</h3>: 3 specific bullet points for resource mobilization.\n   4. <h3>System Tuning (Human-in-the-Loop)</h3>:\n     Include these two styled buttons or links:\n      - [Confirm Outbreak] -> http://localhost:5678/webhook/covid-feedback?status=Confirmed&state=ALL&date={{ $json.date }}\n      - [False Alarm] -> http://localhost:5678/webhook/covid-feedback?status=False Positive&state=ALL&date={{ $json.date }}\n---",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        864,
+        80
+      ],
+      "id": "905c408e-0445-46c3-896b-0aba5afc0700",
+      "name": "AI Intelligence"
     }
   ],
   "pinData": {},
   "connections": {
-    "Query v_critical_alerts": {
-      "main": [
-        [
-          {
-            "node": "Format Risk Data",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Format Risk Data": {
-      "main": [
-        [
-          {
-            "node": "AI Situation Report",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Situation Report": {
-      "main": [
-        [
-          {
-            "node": "Send Alert Email",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Google Gemini": {
       "ai_languageModel": [
         [
           {
-            "node": "AI Situation Report",
+            "node": "AI Intelligence",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -230,7 +196,7 @@
       "main": [
         [
           {
-            "node": "Query v_critical_alerts",
+            "node": "Extract Data",
             "type": "main",
             "index": 0
           }
@@ -247,6 +213,39 @@
           }
         ]
       ]
+    },
+    "Extract Data": {
+      "main": [
+        [
+          {
+            "node": "Format Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Data": {
+      "main": [
+        [
+          {
+            "node": "AI Intelligence",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Intelligence": {
+      "main": [
+        [
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -255,7 +254,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "2a601744-d3d5-4a8f-9c60-5d534199fd69",
+  "versionId": "27424481-4383-4336-8eb2-3baf4cc816bc",
   "meta": {
     "instanceId": "4c49a268c6d8c5b1ab229858d2578271b44484c9b4fa4f9248919044b05bf495"
   },
