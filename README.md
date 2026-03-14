@@ -1,6 +1,6 @@
 # End-to-End COVID-19 Intelligence & AI Reporting System
 
-An integrated **Data Engineering**, **Analysis Tools** and **Generative AI** platform designed to convert raw epidemic data into strategic situational awareness. This system automates the journey from messy CSVs to production-grade Postgres tables, risk evaluation tools, BI dashboard and AI driven alerts and reporting.
+An integrated **Data Engineering**, **Analysis Tools** and **Generative AI** automation(n8n) platform designed to convert raw epidemic data into strategic situational awareness. This system automates the journey from messy CSVs to production-grade Postgres tables, risk evaluation tools, BI dashboard and AI driven alerts and reporting.
 
 ---
 
