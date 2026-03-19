@@ -1,7 +1,7 @@
 [project]
 name = "covid-early-warning"
 version = "0.1.0"
-description = "Add your description here"
+description = "A unified Analsysis and risk evaluation system using , powerbi, excel and n8n"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

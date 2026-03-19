@@ -13,13 +13,13 @@ This system is **Proactive**: it uses real-time ETL and GenAI to flag emerging r
 
 | Stakeholder Persona | Strategic Need | Core Objective | Project Solution |
 | :--- | :--- | :--- | :--- |
-| **Executive Leadership** | Unified situational awareness and national-level risk briefings. | Make informed policy decisions and optimize large-scale resource allocation. | **GenAI Situation Room**: Automated LLM-powered briefings and alerts that convert SQL data into human strategy. |
+| **Executive Leadership** | Unified situational awareness and national-level risk briefings. | Make informed policy decisions and optimize large-scale resource allocation. | **A unified Interface for quick insights and risk evaluation**: Powerbi for national level key parameters , Excel for risk evaluation tools, LLM-powered briefing and alerts|
 | **Operational & Logistics Teams** | Precise data on infection velocity and population protection gaps. | Prioritize the deployment of medical supplies, oxygen, and vaccination units. | **Suggestive Alerting**: Logic-driven triggers flagging states with high positivity, low vax coverage or high fatality rates. |
 | **Epidemiological Analysts** | Access to cleaned, feature-engineered datasets for deep-dive trend research. | Discover hidden transmission patterns and evaluate the efficacy of interventions. | **ETL Pipeline**: Production-grade datasets with engineered metrics like positive_test_rate, case_fatality_rate, daily_new_cases, and more.|
 | **Data Governance & IT** | Automated, reliable data pipelines and high-integrity, real-time reporting. | Minimize manual reporting lag and maintain a single source of truth. | **Dockerized ETL Pipeline**: Staging to gold layers, Postgres as single source of truth(data warehouse). |
 
 
-## Risk level formulated by stakeholders
+## Risk level formulated 
 A state is flagged risky, if it has `positive_test_rate` > x OR `daily_new_cases` > y OR `case_fatality_rate` > z.
 
 For example:
@@ -35,18 +35,8 @@ for states were:
 
 **Variables**: These parameters (x, y, z) can be adjusted by stakeholders to fine-tune the risk assessment and trigger alerts.
 
-## Surveillance & Risk Assessment Questions (Excel)
-To meet the risk thresholds formulated above, the system must provide stakeholders with tools to answer these core surveillance questions:
+## **Risk Evaluation Tool Dashboard Requirements (Excel)**
 
-- **Infection Velocity**: "Which states are exceeding the daily new case threshold (y)?"
-- **Surveillance Integrity**: "Is a rise in positivity (x) real spread or just a result of decreased testing volume?"
-- **Population Vulnerability**: "Are surges happening in states with low vaccination coverage (weighted risk)?"
-- **System Severity**: "Is the Case Fatality Rate (z) rising, indicating hospital saturation or new variants?"
-- **Data Freshness**: "Which states have reporting lags that create critical blind spots in our risk map?"
-
-**Output format required**: Excel Interactive Dashboard
-
-### **Risk Evaluation Tool Dashboard Requirements (Excel)**
 To provide surgical auditing capabilities, the Excel dashboard must implement the following features:
 1. **Dynamic Threshold Control**: A centralized panel where users can adjust variables for positivity rates, case counts, and fatality rates to instantly update the risk map.
 2. **Automated Hot Zone Identification**: A calculation engine that filters and sorts states automatically, highlighting only those that breach any of the user-defined medical thresholds.
@@ -75,7 +65,7 @@ The transition from a manual, reactive data process to this automated surveillan
 | Metric | Traditional Manual Process | Automated System Outcome | Impact |
 | :--- | :--- | :--- | :--- |
 | **System Deployment** | 2-4 Hours (DB setup, env config, dependency management) | **< 10 Minutes** (One-click Docker launch) | **90% faster** time-to-production for new environments. |
-| **Data Transformation** | 4-6 Hours (Manual cleaning, VLOOKUPs, fixing name typos) | **< 30 Seconds** (Medallion ETL Pipeline) | Standardizes 40k+ records instantly with **zero manual error**. |
+| **Data Transformation** | 4-6 Hours (Manual cleaning) | **< 30 Seconds** (Medallion ETL Pipeline) | Standardizes 40k+ records instantly with **zero manual error**. |
 | **Situation Synthesis** | 1-2 Days (Analyst review, drafting briefings, stakeholder sign-off) | **< 60 Seconds** (GenAI Risk Audit) | Leadership receives strategic briefings while the data is still **fresh**. |
 | **Outbreak Detection** | Manual scanning of 36 states to find outliers. | **Instant Logic-Trigger** (Weighted Risk Scoring) | **80% reduction** in administrative search time by focusing only on Hot Zones. |
 
@@ -85,26 +75,8 @@ The transition from a manual, reactive data process to this automated surveillan
 
 1.  **Unified Source of Truth**: Consolidate disparate CSVs into a production-grade Medallion architecture (Postgres).
 2.  **Zero-Lag Intelligence**: Automate the transformation pipeline so the latest data is always available.
-3.  **Actionable Synthesis**: Use GenA to convert complex SQL metrics into qualitative situation reports.
+3.  **Actionable Synthesis**: Use LLM's to convert complex SQL metrics into qualitative situation reports.
 4.  **Human-in-the-Loop**: Implement a feedback mechanism to reduce false positives and tune alert sensitivity.
-
----
-
-## Problem Statement vs. Solution
-
-### **Problem 1: Fragmented Data Quality**
-*   **The Issue**: Raw data contains inconsistent date formats, misspelled state names (e.g., 'Karanataka'), and missing values.
-*   **Our Solution**: A **Medallion Architecture**. We use a Bronze staging layer to prevent crashes and a Silver layer for rigorous standardization.
-
-### **Problem 2: "Alert Fatigue"**
-*   **The Issue**: If a system sends an email for every rise in cases, users eventually ignore it.
-*   **Our Solution**: **Weighted Risk Scoring**. We only trigger alerts based on a combination of High Positivity + Low Vaccination, focusing attention only where it matters most.
-
-### **Problem 3: The "So What?" Factor**
-*   **The Issue**: Charts show numbers, but they don't tell you *what to do*.
-*   **Our Solution**: **GenAI Strategic Assessment**. Gemini analyzes the outliers and suggests specific containment actions (e.g., "Shift oxygen supply to State X").
-
----
 
 ## Industry Best Practices Followed
 *   **Idempotent Pipelines**: The ETL can be re-run safely at any time.
