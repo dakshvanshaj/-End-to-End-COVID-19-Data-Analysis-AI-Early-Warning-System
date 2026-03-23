@@ -85,3 +85,8 @@ SELECT
     COALESCE(NULLIF(NULLIF(TRIM(total_individuals_vaccinated), '-'), ''), '0')::NUMERIC::BIGINT AS total_ind_vax
 FROM covid_vaccine_statewise_staging
 WHERE TRIM(state) != 'India';
+
+-- 5. Add Indexes for Joining Performance
+CREATE INDEX idx_silver_cases_state_date ON silver_cases (state, record_date);
+CREATE INDEX idx_silver_testing_state_date ON silver_testing (state, record_date);
+CREATE INDEX idx_silver_vaccines_state_date ON silver_vaccines (state, record_date);

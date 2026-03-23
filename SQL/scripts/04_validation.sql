@@ -20,6 +20,7 @@ FROM (
 ) deduplicated_set
 WHERE duplicate_flag = 1;
 
+
 -- =================================================================================
 -- PERSISTENT TABLES: Do NOT drop these, only create if they are missing.
 -- =================================================================================
@@ -32,6 +33,9 @@ CREATE TABLE IF NOT EXISTS alert_feedback (
     status VARCHAR(50), -- 'Confirmed', 'False Positive'
     feedback_received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Optimization: Fast lookup for state-wise feedback history
+CREATE INDEX IF NOT EXISTS idx_alert_feedback_state ON alert_feedback (state);
 
 -- Table for storing the latest AI intelligence report
 CREATE TABLE IF NOT EXISTS latest_ai_report (
